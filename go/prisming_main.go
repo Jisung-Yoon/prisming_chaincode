@@ -116,7 +116,7 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 	function, args := stub.GetFunctionAndParameters()
 	fmt.Println(" ")
 	fmt.Println("starting invoke, for - " + function)
-	fmt.Println("starting invoke, for - " + args[0])
+	fmt.Println(args)
 
 	if function == "query"{
 		return t.query(stub, args)
@@ -124,6 +124,8 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 		return t.enroll_donor(stub, args)
 	} else if function == "enroll_npo" {
 		return t.enroll_npo(stub, args)
+	} else if function == "enroll_needs" {
+		t.enroll_needs(stub, args)
 	} else if function == "propose_asset" {
 		return t.propose_asset(stub, args)
 	} else if function == "approve_asset" {
@@ -138,6 +140,8 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 		return t.give_asset(stub, args)
 	} else if function == "get_back_asset" {
 		return t.get_back_asset(stub, args)
+	} else if function == "read_everything" {
+		return t.read_everything(stub)
 	}
 
 	// error out
@@ -793,3 +797,104 @@ func (t *SimpleChaincode) query(stub shim.ChaincodeStubInterface, args []string)
 	return shim.Success(Avalbytes)
 }
 
+
+
+func (t *SimpleChaincode) read_everything(stub shim.ChaincodeStubInterface) pb.Response {
+	type Everything struct {
+		Donors   []Donor   `json:"owners"`
+		NPOs  []NPO  `json:"marbles"`
+		Recipients []Recipient
+		Assets []Asset
+	}
+	var everything Everything
+
+	// ---- Get All Assets ---- //
+	assetsIterator, err := stub.GetStateByRange("a0", "a9999999999999999999")
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	defer assetsIterator.Close()
+
+	for assetsIterator.HasNext() {
+		aKeyValue, err := assetsIterator.Next()
+		if err != nil {
+			return shim.Error(err.Error())
+		}
+		queryKeyAsStr := aKeyValue.Key
+		queryValAsBytes := aKeyValue.Value
+		fmt.Println("on asset id - ", queryKeyAsStr)
+		var asset Asset
+		json.Unmarshal(queryValAsBytes, &asset)                   //un stringify it aka JSON.parse()
+		everything.Assets = append(everything.Assets, asset)
+	}
+	fmt.Println("asset array - ", everything.Assets)
+
+
+	// ---- Get All Donors ---- //
+	donorsIterator, err := stub.GetStateByRange("d0", "d9999999999999999999")
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	defer donorsIterator.Close()
+
+	for donorsIterator.HasNext() {
+		aKeyValue, err := donorsIterator.Next()
+		if err != nil {
+			return shim.Error(err.Error())
+		}
+		queryKeyAsStr := aKeyValue.Key
+		queryValAsBytes := aKeyValue.Value
+		fmt.Println("on donors id - ", queryKeyAsStr)
+		var donor Donor
+		json.Unmarshal(queryValAsBytes, &donor)                  //un stringify it aka JSON.parse()
+		everything.Donors = append(everything.Donors, donor)   //add this marble to the list
+	}
+	fmt.Println("donor array - ", everything.Donors)
+
+	// ---- Get All NPOs ---- //
+	nposIterator, err := stub.GetStateByRange("n0", "n9999999999999999999")
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	defer nposIterator.Close()
+
+	for nposIterator.HasNext() {
+		aKeyValue, err := nposIterator.Next()
+		if err != nil {
+			return shim.Error(err.Error())
+		}
+		queryKeyAsStr := aKeyValue.Key
+		queryValAsBytes := aKeyValue.Value
+		fmt.Println("on NPO id - ", queryKeyAsStr)
+		var npo NPO
+		json.Unmarshal(queryValAsBytes, &npo)                   //un stringify it aka JSON.parse()
+		everything.NPOs = append(everything.NPOs, npo)
+	}
+	fmt.Println("NPO array - ", everything.NPOs)
+
+	// ---- Get All recipient ---- //
+	recsIterator, err := stub.GetStateByRange("r0", "r9999999999999999999")
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	defer recsIterator.Close()
+
+	for recsIterator.HasNext() {
+		aKeyValue, err := recsIterator.Next()
+		if err != nil {
+			return shim.Error(err.Error())
+		}
+		queryKeyAsStr := aKeyValue.Key
+		queryValAsBytes := aKeyValue.Value
+		fmt.Println("on NPO id - ", queryKeyAsStr)
+		var recipient Recipient
+		json.Unmarshal(queryValAsBytes, &recipient)                   //un stringify it aka JSON.parse()
+		everything.Recipients = append(everything.Recipients, recipient)
+	}
+
+	fmt.Println("Reciptents array - ", everything.Recipients)
+
+	//change to array of bytes
+	everythingAsBytes, _ := json.Marshal(everything)              //convert to array of bytes
+	return shim.Success(everythingAsBytes)
+}
