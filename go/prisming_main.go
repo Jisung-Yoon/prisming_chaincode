@@ -253,9 +253,15 @@ func (t *SimpleChaincode) enroll_needs(stub shim.ChaincodeStubInterface, args []
 	temp_npo_id := args[0]
 	temp_npo_by_byte, err := stub.GetState(temp_npo_id)
 	if err != nil {
-		jsonResp := "{\"Error\":\"Failed to get Asset state for\"}"
+		jsonResp := "{\"Error\":\"Failed to get npo state for\"}"
 		return shim.Error(jsonResp)
 	}
+	if temp_npo_by_byte == nil {
+		jsonResp := "{\"Error\":\"Nil amount npo state\"}"
+		return shim.Error(jsonResp)
+	}
+
+
 	json.Unmarshal(temp_npo_by_byte, &temp_npo)
 
 	fmt.Println(temp_npo)
@@ -272,6 +278,7 @@ func (t *SimpleChaincode) enroll_needs(stub shim.ChaincodeStubInterface, args []
 
 	temp_npo.Needs = append(temp_npo.Needs, temp_need)
 
+	fmt.Println(temp_npo)
 	NPOAsBytes, _ := json.Marshal(temp_npo)
 	fmt.Println("writing NPO information to ledger")
 	fmt.Println(string(NPOAsBytes))
