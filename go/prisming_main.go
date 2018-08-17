@@ -25,9 +25,9 @@ type Donor struct {
 type Asset struct {
 	ObjectType     string      `json:"docType"` // field for couchdb
 	Id     string     `json:"id"`
-	Name  string
+	Name  string `json:"name"`
 	DonorId     string     `json:"donorid"`
-	NPOId string
+	NPOId string `json:"npoid`
 	Owner_history []OwnerRelation `json:"owner"`
 	Status     string     `json:"status"`
 	ProductType     string     `json:"producttype"`
@@ -39,16 +39,16 @@ type NPO struct {
 	ObjectType     string      `json:"docType"` // field for couchdb
 	Id     string     `json:"id"`
 	Name     string     `json:"name"`
-	Assets_array []string
-	Needs []Need
+	Assets_array []string `json:"assets_array"`
+	Needs []Need `json:"needs"`
 }
 
 type Recipient struct {
 	ObjectType     string      `json:"docType"` // field for couchdb
 	Id     string	`json:"id"`
 	Name     string     `json:"name"`
-	Types string
-	Asset_array []string
+	Types string `json:"type"`
+	Asset_array []string `json:"asset_array"`
 }
 
 
@@ -62,10 +62,10 @@ type OwnerRelation struct {
 // Donation needs from NPO
 type Need struct {
 	ProductType string `json:"producttype"`
-	Name string
+	Name string `json:"name"`
 	Total_count int `json:"count"`
 	Current_count int `json:"count"`
-	status string
+	status string `json:"name"`
 }
 
 // ============================================================================================================================
@@ -808,8 +808,8 @@ func (t *SimpleChaincode) query(stub shim.ChaincodeStubInterface, args []string)
 
 func (t *SimpleChaincode) read_everything(stub shim.ChaincodeStubInterface) pb.Response {
 	type Everything struct {
-		Donors   []Donor   `json:"owners"`
-		NPOs  []NPO  `json:"marbles"`
+		Donors   []Donor
+		NPOs  []NPO
 		Recipients []Recipient
 		Assets []Asset
 	}
