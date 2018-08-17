@@ -125,7 +125,7 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 	} else if function == "enroll_npo" {
 		return t.enroll_npo(stub, args)
 	} else if function == "enroll_needs" {
-		t.enroll_needs(stub, args)
+		return t.enroll_needs(stub, args)
 	} else if function == "propose_asset" {
 		return t.propose_asset(stub, args)
 	} else if function == "approve_asset" {
