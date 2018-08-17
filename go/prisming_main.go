@@ -13,17 +13,17 @@ type SimpleChaincode struct {
 
 
 type Donor struct {
-	ObjectType     string      `json:"docType"` // field for couchdb
+	ObjectType     string      `json:"doctype"` // field for couchdb
 	Id     string     `json:"id"`
 	Name     string     `json:"name"`
 	Phone     string	`json:"phone"`
 	Credit     int     `json:"credit"`
-	Assets_array []string
+	Assets_array []string `json:"assetArray"`
 }
 
 
 type Asset struct {
-	ObjectType     string      `json:"docType"` // field for couchdb
+	ObjectType     string      `json:"doctype"` // field for couchdb
 	Id     string     `json:"id"`
 	Name  string `json:"name"`
 	DonorId     string     `json:"donorid"`
@@ -36,19 +36,19 @@ type Asset struct {
 }
 
 type NPO struct {
-	ObjectType     string      `json:"docType"` // field for couchdb
+	ObjectType     string      `json:"doctype"` // field for couchdb
 	Id     string     `json:"id"`
 	Name     string     `json:"name"`
-	Assets_array []string `json:"assets_array"`
-	Needs []Need `json:"needs"`
+	Assets_array []string `json:"assetsarray"`
+	Needs []string `json:"needs"`
 }
 
 type Recipient struct {
-	ObjectType     string      `json:"docType"` // field for couchdb
+	ObjectType     string      `json:"doctype"` // field for couchdb
 	Id     string	`json:"id"`
 	Name     string     `json:"name"`
 	Types string `json:"type"`
-	Asset_array []string `json:"asset_array"`
+	Asset_array []string `json:"assetarray"`
 }
 
 
@@ -61,11 +61,13 @@ type OwnerRelation struct {
 
 // Donation needs from NPO
 type Need struct {
+	Id string `json:"id"`
+	NPOID string `json:"npoid`
 	ProductType string `json:"producttype"`
 	Name string `json:"name"`
-	Total_count int `json:"count"`
-	Current_count int `json:"count"`
-	status string `json:"name"`
+	Status string `json:"status"`
+	Total_count int `json:"totalcount"`
+	Current_count int `json:"currentcount"`
 }
 
 // ============================================================================================================================
@@ -194,7 +196,7 @@ func (t *SimpleChaincode) enroll_npo(stub shim.ChaincodeStubInterface, args []st
 	temp_NPO.Id = args[0]
 	temp_NPO.Name = args[1]
 	temp_NPO.Assets_array = []string{}
-	temp_NPO.Needs = []Need{}
+	temp_NPO.Needs = []string{}
 
 	fmt.Println(temp_NPO)
 
@@ -245,12 +247,12 @@ func (t *SimpleChaincode) enroll_needs(stub shim.ChaincodeStubInterface, args []
 
 	var err error
 
-	if len(args) != 4 {
-		return shim.Error("Incorrect number of arguments. Expecting 4")
+	if len(args) != 5 {
+		return shim.Error("Incorrect number of arguments. Expecting 5")
 	}
 
 	var temp_npo NPO
-	temp_npo_id := args[0]
+	temp_npo_id := args[1]
 	temp_npo_by_byte, err := stub.GetState(temp_npo_id)
 	if err != nil {
 		jsonResp := "{\"Error\":\"Failed to get npo state for\"}"
@@ -264,19 +266,21 @@ func (t *SimpleChaincode) enroll_needs(stub shim.ChaincodeStubInterface, args []
 
 	json.Unmarshal(temp_npo_by_byte, &temp_npo)
 
-	fmt.Println(temp_npo)
+
 
 	var temp_need Need
 
-	temp_need.Name = args[1]
-	temp_need.ProductType = args[2]
-	temp_need.Total_count,_ = strconv.Atoi(args[3])
+	temp_need.Id = args[0]
+	temp_need.NPOID = args[1]
+	temp_need.Name = args[2]
+	temp_need.ProductType = args[3]
+	temp_need.Total_count,_ = strconv.Atoi(args[4])
 	temp_need.Current_count = 0
-	temp_need.status = "I"
+	temp_need.Status = "I"
 
 	fmt.Println(temp_need)
 
-	temp_npo.Needs = append(temp_npo.Needs, temp_need)
+	temp_npo.Needs = append(temp_npo.Needs, temp_need.Id)
 
 	fmt.Println(temp_npo)
 	NPOAsBytes, _ := json.Marshal(temp_npo)
@@ -286,6 +290,17 @@ func (t *SimpleChaincode) enroll_needs(stub shim.ChaincodeStubInterface, args []
 	err = stub.PutState(temp_npo.Id, NPOAsBytes)                    //store owner by its Id
 	if err != nil {
 		fmt.Println("Could not store NPO")
+		return shim.Error(err.Error())
+	}
+
+	fmt.Println(temp_need)
+	NeedsAsBytes, _ := json.Marshal(temp_need)
+	fmt.Println("writing needs information to ledger")
+	fmt.Println(string(NeedsAsBytes))
+
+	err = stub.PutState(temp_need.Id, NeedsAsBytes)                    //store owner by its Id
+	if err != nil {
+		fmt.Println("Could not store needs")
 		return shim.Error(err.Error())
 	}
 
@@ -412,14 +427,19 @@ func (t *SimpleChaincode) approve_asset(stub shim.ChaincodeStubInterface, args [
 
 	fmt.Println(temp_npo)
 
+	var temp_need Need
 	check := false
 	for _, v := range temp_npo.Needs {
-		fmt.Println(temp_asset.Name)
-		fmt.Println(v.Name)
-		if v.Name == temp_asset.Name {
-			v.Current_count = v.Current_count + 1
-			if v.Current_count == v.Total_count{
-				v.status = "C"
+		temp_npo_by_byte, err := stub.GetState(v)
+		if err != nil {
+			jsonResp := "{\"Error\":\"Failed to get needs state \"}"
+			return shim.Error(jsonResp)
+		}
+		json.Unmarshal(temp_npo_by_byte, &temp_need)
+		if temp_need.Name == temp_asset.Name {
+			temp_need.Current_count = temp_need.Current_count + 1
+			if temp_need.Current_count == temp_need.Total_count{
+				temp_need.Status = "C"
 			}
 			check = true
 			break
@@ -470,6 +490,15 @@ func (t *SimpleChaincode) approve_asset(stub shim.ChaincodeStubInterface, args [
 		err = stub.PutState(temp_npo.Id, NpoAsBytes)                    //store owner by its Id
 		if err != nil {
 			fmt.Println("Could not store Npo")
+			return shim.Error(err.Error())
+		}
+		NeedsAsBytes, _ := json.Marshal(temp_need)
+		fmt.Println("writing Needs information to ledger")
+		fmt.Println(string(NeedsAsBytes))
+
+		err = stub.PutState(temp_need.Id, NeedsAsBytes)                    //store owner by its Id
+		if err != nil {
+			fmt.Println("Could not store Needs")
 			return shim.Error(err.Error())
 		}
 
@@ -812,6 +841,7 @@ func (t *SimpleChaincode) read_everything(stub shim.ChaincodeStubInterface) pb.R
 		NPOs  []NPO
 		Recipients []Recipient
 		Assets []Asset
+		Needs []Need
 	}
 	var everything Everything
 
@@ -900,6 +930,28 @@ func (t *SimpleChaincode) read_everything(stub shim.ChaincodeStubInterface) pb.R
 	}
 
 	fmt.Println("Reciptents array - ", everything.Recipients)
+
+	// ---- Get All recipient ---- //
+	needsIterator, err := stub.GetStateByRange("e0", "e9999999999999999999")
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	defer needsIterator.Close()
+
+	for needsIterator.HasNext() {
+		aKeyValue, err := needsIterator.Next()
+		if err != nil {
+			return shim.Error(err.Error())
+		}
+		queryKeyAsStr := aKeyValue.Key
+		queryValAsBytes := aKeyValue.Value
+		fmt.Println("on Needs id - ", queryKeyAsStr)
+		var need Need
+		json.Unmarshal(queryValAsBytes, &need)                   //un stringify it aka JSON.parse()
+		everything.Needs = append(everything.Needs, need)
+	}
+
+	fmt.Println("Needs array - ", everything.Needs)
 
 	//change to array of bytes
 	everythingAsBytes, _ := json.Marshal(everything)              //convert to array of bytes
