@@ -100,7 +100,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface) pb.Response {
 	fmt.Println("  GetStringArgs() args found:", alt)
 
 	// store compatible marbles application version
-	err = stub.PutState("marbles_ui", []byte("4.0.1"))
+	err = stub.PutState("marbles_ui", []byte("0.0.1"))
 	if err != nil {
 		return shim.Error(err.Error())
 	}
@@ -150,16 +150,14 @@ func (t *SimpleChaincode) enroll_donor(stub shim.ChaincodeStubInterface, args []
 	var temp_donor Donor  // Entities
 	var err error
 
-	if len(args) != 2 {
-		return shim.Error("Incorrect number of arguments. Expecting 2")
+	if len(args) != 3 {
+		return shim.Error("Incorrect number of arguments. Expecting 3")
 	}
 
-	var prefix string = "Donor_"
-	var temp_id string = args[0]
 	temp_donor.ObjectType = "Donor"
-	temp_donor.Id = fmt.Sprint(prefix, temp_id)
-	temp_donor.Name = temp_id
-	temp_donor.Phone = args[1]
+	temp_donor.Id = args[0] // d0~d999999999
+	temp_donor.Name = args[1]
+	temp_donor.Phone = args[2]
 	temp_donor.Credit = 0
 	temp_donor.Assets_array = []string{}
 
@@ -183,15 +181,14 @@ func (t *SimpleChaincode) enroll_npo(stub shim.ChaincodeStubInterface, args []st
 	var temp_NPO NPO  // Entities
 	var err error
 
-	if len(args) != 1 {
+	if len(args) != 2 {
 		return shim.Error("Incorrect number of arguments. Expecting 2")
 	}
 
-	var prefix string = "NPO_"
-	var temp_id string = args[0]
+
 	temp_NPO.ObjectType = "NPO"
-	temp_NPO.Id = fmt.Sprint(prefix, temp_id)
-	temp_NPO.Name = temp_id
+	temp_NPO.Id = args[0]
+	temp_NPO.Name = args[1]
 	temp_NPO.Assets_array = []string{}
 	temp_NPO.Needs = []Need{}
 
@@ -215,16 +212,15 @@ func (t *SimpleChaincode) enroll_recipient(stub shim.ChaincodeStubInterface, arg
 	var temp_rec Recipient  // Entities
 	var err error
 
-	if len(args) != 2 {
-		return shim.Error("Incorrect number of arguments. Expecting 2")
+	if len(args) != 3 {
+		return shim.Error("Incorrect number of arguments. Expecting 3")
 	}
 
-	var prefix string = "Recipient_"
-	var temp_id string = args[0]
 	temp_rec.ObjectType = "Recipient"
-	temp_rec.Id = fmt.Sprint(prefix, temp_id)
-	temp_rec.Name = temp_id
-	temp_rec.Types = args[1]
+	temp_rec.Id = args[0]
+	temp_rec.Name = args[1]
+	temp_rec.Types = args[2]
+	temp_rec.Asset_array = []string{}
 
 	fmt.Println(temp_rec)
 
@@ -246,14 +242,14 @@ func (t *SimpleChaincode) enroll_needs(stub shim.ChaincodeStubInterface, args []
 	var err error
 
 	if len(args) != 4 {
-		return shim.Error("Incorrect number of arguments. Expecting 2")
+		return shim.Error("Incorrect number of arguments. Expecting 4")
 	}
 
 	var temp_npo NPO
-	temp_npo_id := fmt.Sprint("NPO_", args[0])
+	temp_npo_id := args[0]
 	temp_npo_by_byte, err := stub.GetState(temp_npo_id)
 	if err != nil {
-		jsonResp := "{\"Error\":\"Failed to get Asset state for " + temp_npo_id + "\"}"
+		jsonResp := "{\"Error\":\"Failed to get Asset state for\"}"
 		return shim.Error(jsonResp)
 	}
 	json.Unmarshal(temp_npo_by_byte, &temp_npo)
@@ -290,26 +286,23 @@ func (t *SimpleChaincode) propose_asset(stub shim.ChaincodeStubInterface, args [
 	var temp_asset Asset  // Entities
 	var err error
 
-	if len(args) != 5 {
-		return shim.Error("Incorrect number of arguments. Expecting 5")
+	if len(args) != 6 {
+		return shim.Error("Incorrect number of arguments. Expecting 6")
 	}
 
-	var prefix string = "Asset_"
-	var temp_id string = args[0]
 	temp_asset.ObjectType = "Asset"
-	temp_asset.Id = fmt.Sprint(prefix, temp_id)
-	temp_asset.Name = temp_id
+	temp_asset.Id = args[0]
+	temp_asset.Name = args[1]
 
 	var temp_donor Donor
-	temp_donor_id := fmt.Sprint("Donor_", args[1])
-	temp_donor_by_byte, err := stub.GetState(temp_donor_id)
+	temp_donor_by_byte, err := stub.GetState(args[2])
 	if err != nil {
-		jsonResp := "{\"Error\":\"Failed to get donor state for " + temp_donor_id + "\"}"
+		jsonResp := "{\"Error\":\"Failed to get donor state\"}"
 		return shim.Error(jsonResp)
 	}
 
 	if temp_donor_by_byte == nil {
-		jsonResp := "{\"Error\":\"Nil amount for " + temp_donor_id + "\"}"
+		jsonResp := "{\"Error\":\"Nil amount for \"}"
 		return shim.Error(jsonResp)
 	}
 
@@ -318,15 +311,14 @@ func (t *SimpleChaincode) propose_asset(stub shim.ChaincodeStubInterface, args [
 	temp_asset.DonorId = temp_donor.Id
 
 	var temp_npo NPO
-	temp_npo_id := fmt.Sprint("NPO_", args[2])
-	temp_npo_by_byte, err := stub.GetState(temp_npo_id)
+	temp_npo_by_byte, err := stub.GetState(args[3])
 	if err != nil {
-		jsonResp := "{\"Error\":\"Failed to get NPO state for " + temp_donor_id + "\"}"
+		jsonResp := "{\"Error\":\"Failed to get NPO state for \"}"
 		return shim.Error(jsonResp)
 	}
 
 	if temp_donor_by_byte == nil {
-		jsonResp := "{\"Error\":\"Nil amount for " + temp_donor_id + "\"}"
+		jsonResp := "{\"Error\":\"Nil amount for NPO state\"}"
 		return shim.Error(jsonResp)
 	}
 	json.Unmarshal(temp_npo_by_byte, &temp_npo)
@@ -334,8 +326,8 @@ func (t *SimpleChaincode) propose_asset(stub shim.ChaincodeStubInterface, args [
 	temp_asset.NPOId = temp_npo.Id
 	temp_asset.Owner_history = []OwnerRelation{}
 	temp_asset.Status = "P"
-	temp_asset.ProductType = args[3]
-	temp_asset.Picture = args[4]
+	temp_asset.ProductType = args[4]
+	temp_asset.Picture = args[5]
 
 	fmt.Println(temp_asset)
 
@@ -382,27 +374,25 @@ func (t *SimpleChaincode) approve_asset(stub shim.ChaincodeStubInterface, args [
 	var err error
 
 	if len(args) != 2 {
-		return shim.Error("Incorrect number of arguments. Expecting 5")
+		return shim.Error("Incorrect number of arguments. Expecting 2")
 	}
 
 	var temp_asset Asset
-	temp_asset_id := fmt.Sprint("Asset_", args[0])
-	temp_asset_by_byte, err := stub.GetState(temp_asset_id)
+	temp_asset_by_byte, err := stub.GetState(args[0])
 	if err != nil {
-		jsonResp := "{\"Error\":\"Failed to get Asset state for " + temp_asset_id + "\"}"
+		jsonResp := "{\"Error\":\"Failed to get Asset state\"}"
 		return shim.Error(jsonResp)
 	}
 	json.Unmarshal(temp_asset_by_byte, &temp_asset)
 
 	fmt.Println(temp_asset.NPOId)
-	fmt.Println(fmt.Sprint("NPO_", args[1]))
-	if temp_asset.NPOId != fmt.Sprint("NPO_", args[1]){
+	if temp_asset.NPOId != args[1]{
 		jsonResp := "{\"Error\":\"Asset is not owned by given NPO\"}"
 		return shim.Error(jsonResp)
 	}
+
 	var temp_npo NPO
-	temp_npo_id := temp_asset.NPOId
-	temp_npo_by_byte, err := stub.GetState(temp_npo_id)
+	temp_npo_by_byte, err := stub.GetState(temp_asset.NPOId)
 	if err != nil {
 		jsonResp := "{\"Error\":\"Failed to get npo state \"}"
 		return shim.Error(jsonResp)
@@ -417,6 +407,9 @@ func (t *SimpleChaincode) approve_asset(stub shim.ChaincodeStubInterface, args [
 		fmt.Println(v.Name)
 		if v.Name == temp_asset.Name {
 			v.Current_count = v.Current_count + 1
+			if v.Current_count == v.Total_count{
+				v.status = "C"
+			}
 			check = true
 			break
 		}
@@ -442,7 +435,7 @@ func (t *SimpleChaincode) approve_asset(stub shim.ChaincodeStubInterface, args [
 		temp_donor_id := temp_asset.DonorId
 		temp_donor_by_byte, err := stub.GetState(temp_donor_id)
 		if err != nil {
-			jsonResp := "{\"Error\":\"Failed to get Npo state\"}"
+			jsonResp := "{\"Error\":\"Failed to get Donor state\"}"
 			return shim.Error(jsonResp)
 		}
 		json.Unmarshal(temp_donor_by_byte, &temp_donor)
@@ -460,19 +453,16 @@ func (t *SimpleChaincode) approve_asset(stub shim.ChaincodeStubInterface, args [
 		}
 
 		NpoAsBytes, _ := json.Marshal(temp_npo)
-		fmt.Println("writing Donor information to ledger")
+		fmt.Println("writing Npo information to ledger")
 		fmt.Println(string(NpoAsBytes))
 
 		err = stub.PutState(temp_npo.Id, NpoAsBytes)                    //store owner by its Id
 		if err != nil {
-			fmt.Println("Could not store Donor")
+			fmt.Println("Could not store Npo")
 			return shim.Error(err.Error())
 		}
 
 	}
-
-
-
 
 	return shim.Success(nil)
 }
@@ -482,19 +472,18 @@ func (t *SimpleChaincode) delete_asset(stub shim.ChaincodeStubInterface, args []
 	var err error
 
 	if len(args) != 2 {
-		return shim.Error("Incorrect number of arguments. Expecting 5")
+		return shim.Error("Incorrect number of arguments. Expecting 2")
 	}
 
 	var temp_asset Asset
-	temp_asset_id := fmt.Sprint("Asset_", args[0])
-	temp_asset_by_byte, err := stub.GetState(temp_asset_id)
+	temp_asset_by_byte, err := stub.GetState(args[0])
 	if err != nil {
-		jsonResp := "{\"Error\":\"Failed to get Asset state for " + temp_asset_id + "\"}"
+		jsonResp := "{\"Error\":\"Failed to get Asset state \"}"
 		return shim.Error(jsonResp)
 	}
 	json.Unmarshal(temp_asset_by_byte, &temp_asset)
 
-	if temp_asset.NPOId != fmt.Sprint("NPO_", args[1]){
+	if temp_asset.NPOId != args[1]{
 		jsonResp := "{\"Error\":\"Asset is not owned by given NPO\"}"
 		return shim.Error(jsonResp)
 	}
@@ -506,10 +495,9 @@ func (t *SimpleChaincode) delete_asset(stub shim.ChaincodeStubInterface, args []
 	}
 
 	var temp_npo NPO
-	temp_npo_id := fmt.Sprint("NPO_", args[1])
-	temp_npo_by_byte, err := stub.GetState(temp_npo_id)
+	temp_npo_by_byte, err := stub.GetState(args[0])
 	if err != nil {
-		jsonResp := "{\"Error\":\"Failed to get Asset state for " + temp_npo_id + "\"}"
+		jsonResp := "{\"Error\":\"Failed to get Npo state \"}"
 		return shim.Error(jsonResp)
 	}
 	json.Unmarshal(temp_npo_by_byte, &temp_npo)
@@ -534,8 +522,7 @@ func (t *SimpleChaincode) delete_asset(stub shim.ChaincodeStubInterface, args []
 	}
 
 	var temp_donor Donor
-	temp_donor_id := temp_asset.DonorId
-	temp_donor_by_byte, err := stub.GetState(temp_donor_id)
+	temp_donor_by_byte, err := stub.GetState(temp_asset.DonorId)
 	if err != nil {
 		jsonResp := "{\"Error\":\"Failed to get Donor state for \"}"
 		return shim.Error(jsonResp)
@@ -557,13 +544,9 @@ func (t *SimpleChaincode) delete_asset(stub shim.ChaincodeStubInterface, args []
 
 	err = stub.PutState(temp_donor.Id, DonorAsBytes)                    //store owner by its Id
 	if err != nil {
-		fmt.Println("Could not store NPO")
+		fmt.Println("Could not store Donor")
 		return shim.Error(err.Error())
 	}
-
-
-
-
 
 	return shim.Success(nil)
 }
@@ -573,40 +556,38 @@ func (t *SimpleChaincode) borrow_asset(stub shim.ChaincodeStubInterface, args []
 	var err error
 
 	if len(args) != 2 {
-		return shim.Error("Incorrect number of arguments. Expecting 5")
+		return shim.Error("Incorrect number of arguments. Expecting 2")
 	}
 
 
 	var temp_asset Asset
-	temp_asset_id := fmt.Sprint("Asset_", args[0])
-	temp_asset_by_byte, err := stub.GetState(temp_asset_id)
+	temp_asset_by_byte, err := stub.GetState(args[0])
 	if err != nil {
-		jsonResp := "{\"Error\":\"Failed to get state for " + temp_asset_id + "\"}"
+		jsonResp := "{\"Error\":\"Failed to get asset state\"}"
 		return shim.Error(jsonResp)
 	}
 
 	if temp_asset_by_byte == nil {
-		jsonResp := "{\"Error\":\"Nil amount for " + temp_asset_id + "\"}"
+		jsonResp := "{\"Error\":\"Nil amount asset state\"}"
 		return shim.Error(jsonResp)
 	}
 
 	json.Unmarshal(temp_asset_by_byte, &temp_asset)
 
 	var temp_rec Recipient
-	temp_rec_id := fmt.Sprint("Recipient_", args[1])
-	temp_rec_by_byte, err := stub.GetState(temp_rec_id)
+	temp_rec_by_byte, err := stub.GetState(args[1])
 	if err != nil {
-		jsonResp := "{\"Error\":\"Failed to get state for " + temp_rec_id + "\"}"
+		jsonResp := "{\"Error\":\"Failed to get rec state for \"}"
 		return shim.Error(jsonResp)
 	}
 
 	if temp_asset_by_byte == nil {
-		jsonResp := "{\"Error\":\"Nil amount for " + temp_rec_id + "\"}"
+		jsonResp := "{\"Error\":\"Nil amount rec information \"}"
 		return shim.Error(jsonResp)
 	}
 
 	json.Unmarshal(temp_rec_by_byte, &temp_rec)
-	temp_rec.Asset_array = append(temp_rec.Asset_array, temp_asset_id)
+	temp_rec.Asset_array = append(temp_rec.Asset_array, temp_asset.Id)
 
 
 	var temp_owner_relation OwnerRelation
@@ -646,40 +627,38 @@ func (t *SimpleChaincode) give_asset(stub shim.ChaincodeStubInterface, args []st
 	var err error
 
 	if len(args) != 2 {
-		return shim.Error("Incorrect number of arguments. Expecting 5")
+		return shim.Error("Incorrect number of arguments. Expecting 2")
 	}
 
 
 	var temp_asset Asset
-	temp_asset_id := fmt.Sprint("Asset_", args[0])
-	temp_asset_by_byte, err := stub.GetState(temp_asset_id)
+	temp_asset_by_byte, err := stub.GetState(args[0])
 	if err != nil {
-		jsonResp := "{\"Error\":\"Failed to get state for " + temp_asset_id + "\"}"
+		jsonResp := "{\"Error\":\"Failed to get asset state\"}"
 		return shim.Error(jsonResp)
 	}
 
 	if temp_asset_by_byte == nil {
-		jsonResp := "{\"Error\":\"Nil amount for " + temp_asset_id + "\"}"
+		jsonResp := "{\"Error\":\"Nil amount asset state\"}"
 		return shim.Error(jsonResp)
 	}
 
 	json.Unmarshal(temp_asset_by_byte, &temp_asset)
 
 	var temp_rec Recipient
-	temp_rec_id := fmt.Sprint("Recipient_", args[1])
-	temp_rec_by_byte, err := stub.GetState(temp_rec_id)
+	temp_rec_by_byte, err := stub.GetState(args[1])
 	if err != nil {
-		jsonResp := "{\"Error\":\"Failed to get state for " + temp_rec_id + "\"}"
+		jsonResp := "{\"Error\":\"Failed to get rec state for \"}"
 		return shim.Error(jsonResp)
 	}
 
 	if temp_asset_by_byte == nil {
-		jsonResp := "{\"Error\":\"Nil amount for " + temp_rec_id + "\"}"
+		jsonResp := "{\"Error\":\"Nil amount rec information \"}"
 		return shim.Error(jsonResp)
 	}
 
 	json.Unmarshal(temp_rec_by_byte, &temp_rec)
-	temp_rec.Asset_array = append(temp_rec.Asset_array, temp_asset_id)
+	temp_rec.Asset_array = append(temp_rec.Asset_array, temp_asset.Id)
 
 
 	var temp_owner_relation OwnerRelation
@@ -724,30 +703,28 @@ func (t *SimpleChaincode) get_back_asset(stub shim.ChaincodeStubInterface, args 
 
 
 	var temp_asset Asset
-	temp_asset_id := fmt.Sprint("Asset_", args[0])
-	temp_asset_by_byte, err := stub.GetState(temp_asset_id)
+	temp_asset_by_byte, err := stub.GetState(args[0])
 	if err != nil {
-		jsonResp := "{\"Error\":\"Failed to get state for " + temp_asset_id + "\"}"
+		jsonResp := "{\"Error\":\"Failed to get asset state for\"}"
 		return shim.Error(jsonResp)
 	}
 
 	if temp_asset_by_byte == nil {
-		jsonResp := "{\"Error\":\"Nil amount for " + temp_asset_id + "\"}"
+		jsonResp := "{\"Error\":\"Nil amount asset state \"}"
 		return shim.Error(jsonResp)
 	}
 
 	json.Unmarshal(temp_asset_by_byte, &temp_asset)
 
 	var temp_rec Recipient
-	temp_rec_id := fmt.Sprint("Recipient_", args[1])
-	temp_rec_by_byte, err := stub.GetState(temp_rec_id)
+	temp_rec_by_byte, err := stub.GetState(args[1])
 	if err != nil {
-		jsonResp := "{\"Error\":\"Failed to get state for " + temp_rec_id + "\"}"
+		jsonResp := "{\"Error\":\"Failed to get rec state \"}"
 		return shim.Error(jsonResp)
 	}
 
 	if temp_asset_by_byte == nil {
-		jsonResp := "{\"Error\":\"Nil amount for " + temp_rec_id + "\"}"
+		jsonResp := "{\"Error\":\"Nil amount rec state\"}"
 		return shim.Error(jsonResp)
 	}
 
