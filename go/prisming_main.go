@@ -1049,7 +1049,7 @@ func (t *SimpleChaincode) get_history(stub shim.ChaincodeStubInterface, args []s
 			}
 
 			json.Unmarshal(temp_rec_by_byte, &temp_rec)
-			temp_rec.Asset_array = append(temp_rec.Asset_array, temp_asset.Id)
+			tx.Recipient_info = temp_rec
 
 		}
 
