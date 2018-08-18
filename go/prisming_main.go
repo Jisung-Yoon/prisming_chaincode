@@ -86,7 +86,6 @@ func main() {
 func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface) pb.Response {
 	fmt.Println("Marbles Is Starting Up")
 	funcName, args := stub.GetFunctionAndParameters()
-	var err error
 	txId := stub.GetTxID()
 
 	fmt.Println("Init() is running")
@@ -95,17 +94,14 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface) pb.Response {
 	fmt.Println("  GetFunctionAndParameters() args count:", len(args))
 	fmt.Println("  GetFunctionAndParameters() args found:", args)
 
+	t.enroll_donor(stub, []string{"d1", "김현욱", "010-1234-5678"})
+	t.enroll_npo(stub, []string{"n1","프리즈밍"})
+	t.enroll_npo(stub, []string{"n2","아트센터나비"})
+	t.enroll_npo(stub, []string{"n3","고팍스"})
+	t.enroll_npo(stub, []string{"n4","아름다운가게"})
+	t.enroll_recipient(stub, []string{"r1","윤지성","Permanent"})
 
-	// showing the alternative argument shim function
-	alt := stub.GetStringArgs()
-	fmt.Println("  GetStringArgs() args count:", len(alt))
-	fmt.Println("  GetStringArgs() args found:", alt)
 
-	// store compatible marbles application version
-	err = stub.PutState("marbles_ui", []byte("0.0.1"))
-	if err != nil {
-		return shim.Error(err.Error())
-	}
 
 	fmt.Println("Ready for action")                          //self-test pass
 	return shim.Success(nil)
@@ -146,6 +142,8 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 		return t.read_everything(stub)
 	} else if function == "get_history" {
 		return t.get_history(stub, args)
+	} else if function == "enroll_initial_need"{
+		return t.enroll_initial_needs(stub)
 	}
 
 	// error out
@@ -248,35 +246,44 @@ func (t *SimpleChaincode) enroll_recipient(stub shim.ChaincodeStubInterface, arg
 func (t *SimpleChaincode) enroll_needs(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 
 	var err error
-
+	fmt.Println("Hi")
+	fmt.Println(len(args))
 	if len(args) != 5 {
 		return shim.Error("Incorrect number of arguments. Expecting 5")
 	}
-
+	fmt.Println("Hello")
 	var temp_npo NPO
 	temp_npo_id := args[1]
+	fmt.Println(temp_npo_id)
 	temp_npo_by_byte, err := stub.GetState(temp_npo_id)
 	if err != nil {
 		jsonResp := "{\"Error\":\"Failed to get npo state for\"}"
 		return shim.Error(jsonResp)
 	}
+	fmt.Println(temp_npo_by_byte)
 	if temp_npo_by_byte == nil {
 		jsonResp := "{\"Error\":\"Nil amount npo state\"}"
 		return shim.Error(jsonResp)
 	}
-
+	fmt.Println(temp_npo_by_byte)
 
 	json.Unmarshal(temp_npo_by_byte, &temp_npo)
+	fmt.Println(temp_npo)
 
-
+	fmt.Println("wowwowwowwow")
 
 	var temp_need Need
 
 	temp_need.Id = args[0]
+	fmt.Println("Id complete")
 	temp_need.NPOID = args[1]
+	fmt.Println("NId complete")
 	temp_need.Name = args[2]
+	fmt.Println("Id complete")
 	temp_need.ProductType = args[3]
+	fmt.Println("Id complete")
 	temp_need.Total_count,_ = strconv.Atoi(args[4])
+	fmt.Println("Id complete")
 	temp_need.Current_count = 0
 	temp_need.Status = "Incomplete"
 
@@ -1061,4 +1068,12 @@ func (t *SimpleChaincode) get_history(stub shim.ChaincodeStubInterface, args []s
 	historyAsBytes, _ := json.Marshal(history)     //convert to array of bytes
 	fmt.Println(string(historyAsBytes))
 	return shim.Success(historyAsBytes)
+}
+func (t *SimpleChaincode) enroll_initial_needs(stub shim.ChaincodeStubInterface) pb.Response {
+	t.enroll_needs(stub, []string{"e1","n1","상의_티셔츠","의류","100"})
+	t.enroll_needs(stub, []string{"e2","n1","라면","음식","10000"})
+	t.enroll_needs(stub, []string{"e3","n2","교양서적","도서","1000"})
+	t.enroll_needs(stub, []string{"e4","n2","선풍기","생활가전","20"})
+	t.enroll_needs(stub, []string{"e5","n2","의자","가구","10"})
+	return shim.Success(nil)
 }
