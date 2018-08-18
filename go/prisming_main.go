@@ -144,6 +144,8 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 		return t.get_back_asset(stub, args)
 	} else if function == "read_everything" {
 		return t.read_everything(stub)
+	} else if function == "get_history" {
+		return t.get_history(stub, args)
 	}
 
 	// error out
@@ -956,4 +958,52 @@ func (t *SimpleChaincode) read_everything(stub shim.ChaincodeStubInterface) pb.R
 	//change to array of bytes
 	everythingAsBytes, _ := json.Marshal(everything)              //convert to array of bytes
 	return shim.Success(everythingAsBytes)
+}
+
+
+func (t *SimpleChaincode) get_history(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	type AuditHistory struct {
+		TxId    string   `json:"txId"`
+		Value   Asset   `json:"value"`
+	}
+	var history []AuditHistory;
+	var temp_asset Asset
+
+	if len(args) != 1 {
+		return shim.Error("Incorrect number of arguments. Expecting 1")
+	}
+
+	assetId := args[0]
+	fmt.Printf("- start getHistoryForAseet: %s\n", assetId)
+
+	// Get History
+	resultsIterator, err := stub.GetHistoryForKey(assetId)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	defer resultsIterator.Close()
+
+	for resultsIterator.HasNext() {
+		historyData, err := resultsIterator.Next()
+		if err != nil {
+			return shim.Error(err.Error())
+		}
+
+		var tx AuditHistory
+		tx.TxId = historyData.TxId                     //copy transaction id over
+		json.Unmarshal(historyData.Value, &temp_asset)     //un stringify it aka JSON.parse()
+		if historyData.Value == nil {                  //marble has been deleted
+			var emptyAsset Asset
+			tx.Value = emptyAsset                 //copy nil marble
+		} else {
+			json.Unmarshal(historyData.Value, &temp_asset) //un stringify it aka JSON.parse()
+			tx.Value = temp_asset                      //copy marble over
+		}
+		history = append(history, tx)              //add this tx to the list
+	}
+	fmt.Printf("- getHistoryForAssets returning:\n%s", history)
+
+	//change to array of bytes
+	historyAsBytes, _ := json.Marshal(history)     //convert to array of bytes
+	return shim.Success(historyAsBytes)
 }
