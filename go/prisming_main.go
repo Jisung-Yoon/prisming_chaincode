@@ -1035,7 +1035,7 @@ func (t *SimpleChaincode) get_history(stub shim.ChaincodeStubInterface, args []s
 
 
 		if tx.Value.Status == "Given"{
-
+			fmt.Printf("wowwowwowowowown")
 			var temp_rec Recipient
 			temp_rec_by_byte, err := stub.GetState(tx.Value.Owner_history[0].Id)
 			if err != nil {
