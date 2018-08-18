@@ -965,6 +965,9 @@ func (t *SimpleChaincode) get_history(stub shim.ChaincodeStubInterface, args []s
 	type AuditHistory struct {
 		TxId    string   `json:"txId"`
 		Value   Asset   `json:"value"`
+		Donor_info Donor
+		Npo_info NPO
+		Recipient_info Recipient
 	}
 	var history []AuditHistory;
 	var temp_asset Asset
@@ -985,6 +988,7 @@ func (t *SimpleChaincode) get_history(stub shim.ChaincodeStubInterface, args []s
 
 	for resultsIterator.HasNext() {
 		historyData, err := resultsIterator.Next()
+		fmt.Println(historyData)
 		if err != nil {
 			return shim.Error(err.Error())
 		}
@@ -999,11 +1003,62 @@ func (t *SimpleChaincode) get_history(stub shim.ChaincodeStubInterface, args []s
 			json.Unmarshal(historyData.Value, &temp_asset) //un stringify it aka JSON.parse()
 			tx.Value = temp_asset                      //copy marble over
 		}
+		var temp_donor Donor
+		temp_donor_by_byte, err := stub.GetState(tx.Value.DonorId)
+		if err != nil {
+			jsonResp := "{\"Error\":\"Failed to get donor state\"}"
+			return shim.Error(jsonResp)
+		}
+
+		if temp_donor_by_byte == nil {
+			jsonResp := "{\"Error\":\"Nil amount for \"}"
+			return shim.Error(jsonResp)
+		}
+
+		json.Unmarshal(temp_donor_by_byte, &temp_donor)
+		tx.Donor_info = temp_donor
+
+		var temp_npo NPO
+		temp_npo_by_byte, err := stub.GetState(tx.Value.NPOId)
+		if err != nil {
+			jsonResp := "{\"Error\":\"Failed to get donor state\"}"
+			return shim.Error(jsonResp)
+		}
+
+		if temp_donor_by_byte == nil {
+			jsonResp := "{\"Error\":\"Nil amount for \"}"
+			return shim.Error(jsonResp)
+		}
+
+		json.Unmarshal(temp_npo_by_byte, &temp_npo)
+		tx.Npo_info = temp_npo
+
+
+		if tx.Value.Status == "Given"{
+
+			var temp_rec Recipient
+			temp_rec_by_byte, err := stub.GetState(tx.Value.Owner_history[0].Id)
+			if err != nil {
+				jsonResp := "{\"Error\":\"Failed to get rec state for \"}"
+				return shim.Error(jsonResp)
+			}
+
+			if temp_rec_by_byte == nil {
+				jsonResp := "{\"Error\":\"Nil amount rec information \"}"
+				return shim.Error(jsonResp)
+			}
+
+			json.Unmarshal(temp_rec_by_byte, &temp_rec)
+			temp_rec.Asset_array = append(temp_rec.Asset_array, temp_asset.Id)
+
+		}
+
 		history = append(history, tx)              //add this tx to the list
 	}
 	fmt.Printf("- getHistoryForAssets returning:\n%s", history)
 
 	//change to array of bytes
 	historyAsBytes, _ := json.Marshal(history)     //convert to array of bytes
+	fmt.Println(string(historyAsBytes))
 	return shim.Success(historyAsBytes)
 }
