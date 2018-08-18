@@ -1071,9 +1071,8 @@ func (t *SimpleChaincode) get_history(stub shim.ChaincodeStubInterface, args []s
 }
 func (t *SimpleChaincode) enroll_initial_needs(stub shim.ChaincodeStubInterface) pb.Response {
 	t.enroll_needs(stub, []string{"e1","n1","상의_티셔츠","의류","100"})
-	t.enroll_needs(stub, []string{"e2","n1","라면","음식","10000"})
-	t.enroll_needs(stub, []string{"e3","n2","교양서적","도서","1000"})
-	t.enroll_needs(stub, []string{"e4","n2","선풍기","생활가전","20"})
-	t.enroll_needs(stub, []string{"e5","n2","의자","가구","10"})
+	t.enroll_needs(stub, []string{"e2","n2","라면","음식","10000"})
+	t.enroll_needs(stub, []string{"e3","n3","교양서적","도서","1000"})
+	t.enroll_needs(stub, []string{"e4","n4","선풍기","생활가전","20"})
 	return shim.Success(nil)
 }
