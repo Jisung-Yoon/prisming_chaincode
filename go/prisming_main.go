@@ -142,7 +142,7 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 		return t.read_everything(stub)
 	} else if function == "get_history" {
 		return t.get_history(stub, args)
-	} else if function == "enroll_initial_need"{
+	} else if function == "enroll_initial_needs"{
 		return t.enroll_initial_needs(stub)
 	}
 
