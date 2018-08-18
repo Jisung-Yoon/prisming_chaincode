@@ -353,7 +353,7 @@ func (t *SimpleChaincode) propose_asset(stub shim.ChaincodeStubInterface, args [
 
 	temp_asset.NPOId = temp_npo.Id
 	temp_asset.Owner_history = []OwnerRelation{}
-	temp_asset.Status = "P"
+	temp_asset.Status = "Proposed"
 	temp_asset.ProductType = args[4]
 	temp_asset.Picture = args[5]
 
@@ -449,7 +449,7 @@ func (t *SimpleChaincode) approve_asset(stub shim.ChaincodeStubInterface, args [
 	}
 
 
-	temp_asset.Status = "A"
+	temp_asset.Status = "Approved"
 
 	fmt.Println(temp_asset)
 
@@ -639,7 +639,7 @@ func (t *SimpleChaincode) borrow_asset(stub shim.ChaincodeStubInterface, args []
 	fmt.Println(temp_owner_relation)
 
 	temp_asset.Owner_history = append(temp_asset.Owner_history, temp_owner_relation)
-	temp_asset.Status = "B"
+	temp_asset.Status = "Borrowed"
 
 	AssetAsBytes, _ := json.Marshal(temp_asset)
 	fmt.Println("writing Asset information to ledger")
@@ -710,7 +710,7 @@ func (t *SimpleChaincode) give_asset(stub shim.ChaincodeStubInterface, args []st
 	fmt.Println(temp_owner_relation)
 
 	temp_asset.Owner_history = append(temp_asset.Owner_history, temp_owner_relation)
-	temp_asset.Status = "G"
+	temp_asset.Status = "Given"
 
 	AssetAsBytes, _ := json.Marshal(temp_asset)
 	fmt.Println("writing Asset information to ledger")
@@ -774,7 +774,7 @@ func (t *SimpleChaincode) get_back_asset(stub shim.ChaincodeStubInterface, args 
 
 
 
-	temp_asset.Status = "A"
+	temp_asset.Status = "Approved"
 	for i, v := range temp_rec.Asset_array {
 		if v == temp_asset.Id {
 			temp_rec.Asset_array = append(temp_rec.Asset_array[:i], temp_rec.Asset_array[i+1:]...)
