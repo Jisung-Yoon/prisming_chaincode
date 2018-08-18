@@ -278,7 +278,7 @@ func (t *SimpleChaincode) enroll_needs(stub shim.ChaincodeStubInterface, args []
 	temp_need.ProductType = args[3]
 	temp_need.Total_count,_ = strconv.Atoi(args[4])
 	temp_need.Current_count = 0
-	temp_need.Status = "I"
+	temp_need.Status = "Incomplete"
 
 	fmt.Println(temp_need)
 
@@ -441,7 +441,7 @@ func (t *SimpleChaincode) approve_asset(stub shim.ChaincodeStubInterface, args [
 		if temp_need.Name == temp_asset.Name {
 			temp_need.Current_count = temp_need.Current_count + 1
 			if temp_need.Current_count == temp_need.Total_count{
-				temp_need.Status = "C"
+				temp_need.Status = "Complete"
 			}
 			check = true
 			break
