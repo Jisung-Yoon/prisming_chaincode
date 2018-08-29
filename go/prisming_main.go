@@ -96,8 +96,8 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface) pb.Response {
 
 	t.enroll_donor(stub, []string{"d1", "김현욱", "010-1234-5678"})
 	t.enroll_npo(stub, []string{"n1","프리즈밍"})
-	t.enroll_npo(stub, []string{"n2","아트센터나비"})
-	t.enroll_npo(stub, []string{"n3","고팍스"})
+	t.enroll_npo(stub, []string{"n2","비영리스타트업"})
+	t.enroll_npo(stub, []string{"n3","서울시NPO지원센터"})
 	t.enroll_npo(stub, []string{"n4","아름다운가게"})
 	t.enroll_recipient(stub, []string{"r1","윤지성","Permanent"})
 
